@@ -15,3 +15,10 @@ cd build
 cmake ..
 make
 cd ../../..
+
+cp OpenKinect-libfreenect-67c0d07/c/include/libfreenect.h KinectCapture/include
+cp OpenKinect-libfreenect-67c0d07/c/build/lib/libfreenect.a KinectCapture/lib
+
+cd KinectCapture
+make
+cd ..
