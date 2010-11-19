@@ -684,8 +684,8 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
                     const Keypoint &key = *iter;
 
                     if (key.m_extra >= 0) {
-                        double b[3], pr[2];
-                        double dx, dy, dist;
+                        double b[3], pr[3];
+                        double dx, dy, ddepth, dist;
                         int pt_idx = key.m_extra;
 
                         b[0] = Vx(nz_pts[remap[pt_idx]]);
@@ -706,8 +706,9 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
 
                         dx = pr[0] - key.m_x;
                         dy = pr[1] - key.m_y;
+                        ddepth = pr[2] - key.m_depth;
 
-                        dist = sqrt(dx * dx + dy * dy);
+                        dist = sqrt(dx * dx + dy * dy + ddepth*ddepth);
                         dist_total += dist;
                         num_dists++;
 
@@ -2717,8 +2718,9 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v2_t *projs,
         assert (0);
         double dx = Vx(pr) - Vx(projs[i]);
         double dy = Vy(pr) - Vy(projs[i]);
+        double ddepth = Vz(pr) - Vz(projs[i]);
 
-        error += dx * dx + dy * dy;
+        error += dx * dx + dy * dy + ddepth*ddepth;
 
         delete [] pv;
         delete [] Rs;

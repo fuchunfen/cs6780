@@ -177,6 +177,7 @@ v3_t sfm_project_final(camera_params_t *params, v3_t pt,
 
     Vx(proj) = b_proj[0];
     Vy(proj) = b_proj[1];
+    Vz(proj) = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
 
     return proj;
 }

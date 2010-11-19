@@ -113,8 +113,9 @@ v3_t BundlerApp::TriangulateNViews(const ImageKeyVector &views,
 
 	double dx = Vx(pr) - key.m_x;
 	double dy = Vy(pr) - key.m_y;
+        double ddepth = Vz(pr) - key.m_depth;
 
-	error += dx * dx + dy * dy;
+	error += dx * dx + dy * dy + ddepth*ddepth;
     }
 
     error = sqrt(error / num_views);
