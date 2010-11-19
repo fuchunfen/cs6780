@@ -11,3 +11,6 @@ ls captures > files.txt
 ./ConvertCaptures
 ls converted > converted.txt
 ./MakePairs
+cp RunBundler.sh images
+cd images
+./RunBunlder.sh
