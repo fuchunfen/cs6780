@@ -1,0 +1,10 @@
+sudo apt-get install gfortran freeglut3-dev libusb-1.0-0-dev cmake build-essential
+
+To install:
+
+Execute:
+sudo ./install.sh
+
+Edit:
+RunBundler.sh
+Specify the correct absolute path
