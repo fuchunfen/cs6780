@@ -2499,10 +2499,10 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
 {
     int num_points_curr = num_points;
     v3_t *points_curr = new v3_t[num_points];
-    v2_t *projs_curr = new v2_t[num_points];
+    v3_t *projs_curr = new v3_t[num_points];
 
     memcpy(points_curr, points, num_points * sizeof(v3_t));
-    memcpy(projs_curr, projs, num_points * sizeof(v2_t));
+    memcpy(projs_curr, projs, num_points * sizeof(v3_t));
 
     std::vector<int> inliers;
 
@@ -2525,8 +2525,8 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
             break;
 
         v3_t *points_next = new v3_t[num_points];
-        v2_t *projs_next = new v2_t[num_points];
-
+        v3_t *projs_next = new v3_t[num_points];
+        assert (0);
         int count = 0;
         double error = 0.0;
         std::vector<int> inliers_next;
@@ -2534,9 +2534,9 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
         double *errors = new double[num_points_curr];
 
         for (int i = 0; i < num_points_curr; i++) {
-            v2_t pr = sfm_project_final(camera, points_curr[i], 1,
+            v3_t pr = sfm_project_final(camera, points_curr[i], 1,
                 estimate_distortion ? 1 : 0);
-
+            assert (0);
             if (optimize_for_fisheye) {
                 /* Distort pr */
 
@@ -2712,9 +2712,9 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v2_t *projs,
         points[i] = triangulate_n_refine(points[i], num_views, pv, Rs, ts, 
             &error_curr);
 
-        v2_t pr = sfm_project_final(camera_out, points[i], 1,
+        v3_t pr = sfm_project_final(camera_out, points[i], 1,
             m_estimate_distortion ? 1 : 0);
-
+        assert (0);
         double dx = Vx(pr) - Vx(projs[i]);
         double dy = Vy(pr) - Vy(projs[i]);
 

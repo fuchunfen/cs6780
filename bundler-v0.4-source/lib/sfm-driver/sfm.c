@@ -116,13 +116,13 @@ void rot_update(double *R, double *w, double *Rnew)
     matrix_product33(dR, R, Rnew);
 }
 
-v2_t sfm_project_final(camera_params_t *params, v3_t pt, 
+v3_t sfm_project_final(camera_params_t *params, v3_t pt, 
 		       int explicit_camera_centers, int undistort)
 {
     double b_cam[3], b_proj[3];
     double b[3] = { Vx(pt), Vy(pt), Vz(pt) };
-    v2_t proj;
-
+    v3_t proj;
+    assert (0);
     /* Project! */
     if (!explicit_camera_centers) {
 	matrix_product331(params->R, b, b_cam);
@@ -1092,7 +1092,7 @@ void camera_refine_residual(const int *m, const int *n,
 }
 
 /* Refine the position of a single camera */
-void camera_refine(int num_points, v3_t *points, v2_t *projs, 
+void camera_refine(int num_points, v3_t *points, v3_t *projs, 
 		   camera_params_t *params, int adjust_focal, 
                    int estimate_distortion)
 {
