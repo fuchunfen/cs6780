@@ -3,6 +3,10 @@
 #include <opencv/highgui.h>
 #include <opencv/cv.h>
 
+#define COLOR_BUFFER_SIZE 307200 //640*480 
+#define DEPTH_BUFFER_SIZE 614400 //2*640*480
+
+IplImage * bayer_image;
 IplImage * rgb_image;
 uint16_t t_gamma [2048];
 
@@ -12,11 +16,11 @@ encode_rgb (const std::string & filename)
   std::stringstream ss;
   ss << "captures/" << filename;
   std::ifstream file (ss.str().c_str(), std::ios_base::binary);
-  uint8_t buffer [921600];
-  file.read ((char*)buffer, 921600);
+  uint8_t buffer [COLOR_BUFFER_SIZE];
+  file.read ((char*)buffer, COLOR_BUFFER_SIZE);
   file.close();
-  memcpy (rgb_image->imageData, buffer, 921600);
-  cvCvtColor (rgb_image, rgb_image, CV_RGB2BGR);
+  memcpy (bayer_image->imageData, buffer, COLOR_BUFFER_SIZE);
+  cvCvtColor (bayer_image, rgb_image, CV_BayerGB2BGR);
   std::stringstream ss_new;
   ss_new << "converted/" << filename.substr(0, filename.find('.')) << ".jpg";
   cvSaveImage (ss_new.str().c_str(), rgb_image);
@@ -29,7 +33,7 @@ encode_depth (const std::string & filename)
   ss << "captures/" << filename;
   std::ifstream file (ss.str().c_str(), std::ios_base::binary);
   uint16_t buffer[307200];
-  file.read ((char*)buffer, 307200*2);
+  file.read ((char*)buffer, DEPTH_BUFFER_SIZE);
   file.close();
   std::stringstream ss_new;
   ss_new << "converted/" << filename.substr(0, filename.find('.'));
@@ -56,13 +60,14 @@ main (int argc, char ** argv)
   }
 
   rgb_image = cvCreateImage (cvSize (640, 480), IPL_DEPTH_8U, 3);
+  bayer_image = cvCreateImage (cvSize (640, 480), IPL_DEPTH_8U, 1);
 
   std::ifstream input ("files.txt");
   std::string filename;
   while (input >> filename)
   {
     std::string type = filename.substr (filename.find('.') + 1);
-    if (!type.compare("bgr"))
+    if (!type.compare("bayer"))
     {
       encode_rgb (filename);
     }
