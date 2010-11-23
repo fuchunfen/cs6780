@@ -102,7 +102,7 @@ v3_t BundlerApp::TriangulateNViews(const ImageKeyVector &views,
 	int key_idx = views[i].second;
 	Keypoint &key = GetKey(image_idx, key_idx);
 
-	v2_t pr = sfm_project_final(cameras + camera_idx, pt, 
+	v3_t pr = sfm_project_final(cameras + camera_idx, pt, 
 				    explicit_camera_centers ? 1 : 0,
                                     m_estimate_distortion ? 1 : 0);
         
@@ -113,8 +113,10 @@ v3_t BundlerApp::TriangulateNViews(const ImageKeyVector &views,
 
 	double dx = Vx(pr) - key.m_x;
 	double dy = Vy(pr) - key.m_y;
-
-	error += dx * dx + dy * dy;
+        double ddepth = Vz(pr) - key.m_depth;
+        //@@@
+        printf("@@@11\n");
+	error += dx * dx + dy * dy + ddepth*ddepth;
     }
 
     error = sqrt(error / num_views);
@@ -568,13 +570,16 @@ int BundlerApp::BundleAdjustAddNewPoints(int camera_idx,
 		int pt_idx = GetKey(image_idx,this_idx).m_extra;
 
 		/* Check reprojection error */	    
-		v2_t pr = sfm_project_final(cameras + i, points[pt_idx], 
+		v3_t pr = sfm_project_final(cameras + i, points[pt_idx], 
 					    true, m_estimate_distortion);
 
 		double dx = GetKey(other,other_idx).m_x - Vx(pr);
 		double dy = GetKey(other,other_idx).m_y - Vy(pr);
+                double ddepth = GetKey(other, other_idx).m_depth - Vz(pr);
 		    
-		double proj_error = sqrt(dx * dx + dy * dy);
+                //@@@
+                printf("@@@12\n");
+		double proj_error = sqrt(dx * dx + dy * dy + ddepth*ddepth);
 
 		if (proj_error >= 32.0) {
 		    printf("  Would have connected existing match "
@@ -697,14 +702,16 @@ int BundlerApp::BundleAdjustAddNewPoints(int camera_idx,
 		int pt_idx = GetKey(other,other_idx).m_extra;
 
 		/* Check reprojection error */
-		v2_t pr = sfm_project_final(cameras + camera_idx, 
+		v3_t pr = sfm_project_final(cameras + camera_idx, 
 					    points[pt_idx],
 					    true, m_estimate_distortion);
 
 		double dx = GetKey(image_idx,this_idx).m_x - Vx(pr);
 		double dy = GetKey(image_idx,this_idx).m_y - Vy(pr);
-		    
-		double proj_error = sqrt(dx * dx + dy * dy);
+                double ddepth = GetKey (image_idx, this_idx).m_depth - Vz(pr);		  
+                //@@@
+                printf("@@@13\n");
+		double proj_error = sqrt(dx * dx + dy * dy + ddepth*ddepth);
 
 		if (proj_error <= INIT_REPROJECTION_ERROR) {
 		    printf("  Reconnecting point [%d] (%d) (error: %0.3f)\n", 
