@@ -374,6 +374,8 @@ void sfm_project_rd(camera_params_t *init, double *K, double *k,
 	p[0] *= factor;
 	p[1] *= factor;
     }
+    printf("@@@18\n");
+    p[2] = b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2];
 }
 
 static double *global_last_ws = NULL;
@@ -826,6 +828,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 #ifdef SBA_V121
     if (fix_points == 0) {
         if (optimize_for_fisheye == 0) {
+            printf("@@@sba1\n");
             sba_motstr_levmar(num_pts, num_cameras, ncons, 
                               vmask, params, cnp, 3, projections, NULL, 3, 
                               //remove NULL in prev line for sba v1.2.1
@@ -836,6 +839,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
                               use_point_constraints,
                               point_constraints, Vout, Sout, Uout, Wout);
         } else {
+            printf("@@@sba2\n");
             sba_motstr_levmar(num_pts, num_cameras, ncons, 
                               vmask, params, cnp, 3, projections, NULL, 3,
                               sfm_project_point2_fisheye, NULL, 
@@ -847,6 +851,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
         }
     } else {
         if (optimize_for_fisheye == 0) {
+            printf("@@@sba3\n");
             sba_mot_levmar(num_pts, num_cameras, ncons, 
                            vmask, params, cnp, projections, NULL, 3,
                            sfm_project_point3_mot, NULL, 
@@ -854,6 +859,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
                            MAX_ITERS, VERBOSITY, opts, info,
                            use_constraints, constraints);
         } else {
+            printf("@@@sba4\n");
             sba_mot_levmar(num_pts, num_cameras, ncons, 
                            vmask, params, cnp, projections, NULL, 3,
                            sfm_project_point2_fisheye_mot, NULL, 
@@ -864,6 +870,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
     }
 #else
     if (fix_points == 0) {
+        printf("@@@sba5\n");
 	sba_motstr_levmar(num_pts, num_cameras, ncons, 
 			  vmask, params, cnp, 3, projections, 3,
 			  sfm_project_point2, NULL, (void *) (&global_params),
@@ -871,6 +878,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 			  use_constraints, constraints, 
                           Vout, Sout, Uout, Wout);
     } else {
+        printf("@@@sba6\n");
 	sba_mot_levmar(num_pts, num_cameras, ncons, 
 		       vmask, params, cnp, projections, 3,
 		       sfm_mot_project_point, NULL, (void *) (&global_params),
