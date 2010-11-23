@@ -116,12 +116,12 @@ void rot_update(double *R, double *w, double *Rnew)
     matrix_product33(dR, R, Rnew);
 }
 
-v3_t sfm_project_final(camera_params_t *params, v3_t pt, 
+v2_t sfm_project_final(camera_params_t *params, v3_t pt, 
 		       int explicit_camera_centers, int undistort)
 {
     double b_cam[3], b_proj[3];
     double b[3] = { Vx(pt), Vy(pt), Vz(pt) };
-    v3_t proj;
+    v2_t proj;
 
     /* Project! */
     if (!explicit_camera_centers) {
@@ -177,7 +177,6 @@ v3_t sfm_project_final(camera_params_t *params, v3_t pt,
 
     Vx(proj) = b_proj[0];
     Vy(proj) = b_proj[1];
-    Vz(proj) = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
 
     return proj;
 }
@@ -220,7 +219,6 @@ void sfm_project(camera_params_t *init, double *K,
         matrix_product331(K, b_cam, b_proj);
         p[0] = -b_proj[0] / b_proj[2];
         p[1] = -b_proj[1] / b_proj[2];
-        p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
     } else {
         /* Apply intrinsics */
         double x_n = -b_cam[0] / b_cam[2];
@@ -240,7 +238,6 @@ void sfm_project(camera_params_t *init, double *K,
         double *K = init->K_known;
         p[0] = K[0] * x_d + K[1] * y_d + K[2];
         p[1] = K[4] * y_d + K[5];
-        p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
     }
 }
 
@@ -280,7 +277,6 @@ void sfm_project2(camera_params_t *init, double f,
     if (!init->known_intrinsics) {
         p[0] = -b_cam[0] * f / b_cam[2];
         p[1] = -b_cam[1] * f / b_cam[2];
-        p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
     } else {
         /* Apply intrinsics */
         double x_n = -b_cam[0] / b_cam[2];
@@ -300,7 +296,6 @@ void sfm_project2(camera_params_t *init, double f,
         double *K = init->K_known;
         p[0] = K[0] * x_d + K[1] * y_d + K[2];
         p[1] = K[4] * y_d + K[5];
-        p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
     }
 }
 
@@ -337,7 +332,6 @@ void sfm_project_rd(camera_params_t *init, double *K, double *k,
     if (!init->known_intrinsics) {
         p[0] = -b_cam[0] * K[0] / b_cam[2];
         p[1] = -b_cam[1] * K[0] / b_cam[2];
-        p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
     } else {
         /* Apply intrinsics */
         double x_n = -b_cam[0] / b_cam[2];
@@ -357,7 +351,6 @@ void sfm_project_rd(camera_params_t *init, double *K, double *k,
         double *K = init->K_known;
         p[0] = K[0] * x_d + K[1] * y_d + K[2];
         p[1] = K[4] * y_d + K[5];
-        p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
     }
 
     // p[0] = b_cam[0] * K[0] / b_cam[2];
@@ -831,7 +824,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
     if (fix_points == 0) {
         if (optimize_for_fisheye == 0) {
             sba_motstr_levmar(num_pts, num_cameras, ncons, 
-                              vmask, params, cnp, 3, projections, NULL, 3, 
+                              vmask, params, cnp, 3, projections, NULL, 2, 
                               //remove NULL in prev line for sba v1.2.1
                               sfm_project_point3, NULL, 
                               (void *) (&global_params),
@@ -841,7 +834,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
                               point_constraints, Vout, Sout, Uout, Wout);
         } else {
             sba_motstr_levmar(num_pts, num_cameras, ncons, 
-                              vmask, params, cnp, 3, projections, NULL, 3,
+                              vmask, params, cnp, 3, projections, NULL, 2,
                               sfm_project_point2_fisheye, NULL, 
                               (void *) (&global_params),
                               MAX_ITERS, VERBOSITY, opts, info,
@@ -852,14 +845,14 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
     } else {
         if (optimize_for_fisheye == 0) {
             sba_mot_levmar(num_pts, num_cameras, ncons, 
-                           vmask, params, cnp, projections, NULL, 3,
+                           vmask, params, cnp, projections, NULL, 2,
                            sfm_project_point3_mot, NULL, 
                            (void *) (&global_params),
                            MAX_ITERS, VERBOSITY, opts, info,
                            use_constraints, constraints);
         } else {
             sba_mot_levmar(num_pts, num_cameras, ncons, 
-                           vmask, params, cnp, projections, NULL, 3,
+                           vmask, params, cnp, projections, NULL, 2,
                            sfm_project_point2_fisheye_mot, NULL, 
                            (void *) (&global_params),
                            MAX_ITERS, VERBOSITY, opts, info,
@@ -869,14 +862,14 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 #else
     if (fix_points == 0) {
 	sba_motstr_levmar(num_pts, num_cameras, ncons, 
-			  vmask, params, cnp, 3, projections, 3,
+			  vmask, params, cnp, 3, projections, 2,
 			  sfm_project_point2, NULL, (void *) (&global_params),
 			  MAX_ITERS, VERBOSITY, opts, info, 
 			  use_constraints, constraints, 
                           Vout, Sout, Uout, Wout);
     } else {
 	sba_mot_levmar(num_pts, num_cameras, ncons, 
-		       vmask, params, cnp, projections, 3,
+		       vmask, params, cnp, projections, 2,
 		       sfm_mot_project_point, NULL, (void *) (&global_params),
 		       MAX_ITERS, VERBOSITY, opts, info);
     }
@@ -962,7 +955,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 
 	for (j = 0; j < num_pts; j++) {
 	    double b[3], pr[2];
-	    double dx, dy, ddepth, dist;
+	    double dx, dy, dist;
 
 	    if (!vmask[j * num_cameras + i])
 		continue;
@@ -976,9 +969,8 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 
 	    dx = pr[0] - Vx(projections[j * num_cameras + i]);
 	    dy = pr[1] - Vy(projections[j * num_cameras + i]);
-            ddepth = pr[2] - Vz(projections[j * num_cameras + i]);
 
-	    dist = dx * dx + dy * dy + ddepth*ddepth;
+	    dist = dx * dx + dy * dy;
 	    error += dist;
 	    
 	    if (dist > error_max) {
@@ -986,7 +978,6 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 		error_max = dist;
 		px_max = Vx(projections[j * num_cameras + i]);
 		py_max = Vy(projections[j * num_cameras + i]);
-                pdepth_max = Vz(projections[j * num_cameras + i]);
 	    }
 	    
 	    num_projs++;
@@ -995,7 +986,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 	printf("Camera %d:  error = %0.3f (%0.3f)\n", i,
 	       error, sqrt(error / num_projs));
 	printf("           error_max = %0.3f (%d)\n", sqrt(error_max), idx_max);
-	printf("           proj = %0.3f, %0.3f, %0.3f\n", px_max, py_max, pdepth_max);
+	printf("           proj = %0.3f, %0.3f\n", px_max, py_max);
     }
 #endif /* DEBUG_SFM */
 
@@ -1021,7 +1012,7 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
 static int global_num_points = 0;
 static sfm_global_t *global_params = NULL;
 static v3_t *global_points = NULL;
-static v3_t *global_projections = NULL;
+static v2_t *global_projections = NULL;
 static int global_constrain_focal = 0;
 static double global_init_focal = 0.0;
 static double global_constrain_focal_weight = 0.0;
@@ -1039,39 +1030,37 @@ void camera_refine_residual(const int *m, const int *n,
 			 Vy(global_points[i]),
 			 Vz(global_points[i]) };
 
-	double proj[3], dx, dy, ddepth;
+	double proj[2], dx, dy;
         
 	sfm_project_point(0, i, x, pt, proj, (void *) global_params);
 
 	dx = Vx(global_projections[i]) - proj[0];
 	dy = Vy(global_projections[i]) - proj[1];
-        ddepth = Vz(global_projections[i]) - proj[2];
 
-	fvec[3 * i + 0] = dx;
-	fvec[3 * i + 1] = dy;
-        fvec[3 * i + 2] = ddepth;
+	fvec[2 * i + 0] = dx;
+	fvec[2 * i + 1] = dy;
 
 	if (*iflag == 0) {
-	    error += dx * dx + dy * dy + ddepth*ddepth;
-	    error2 += sqrt(dx * dx + dy * dy + ddepth*ddepth);
+	    error += dx * dx + dy * dy;
+	    error2 += sqrt(dx * dx + dy * dy);
 	}
     }
 
     if (global_constrain_focal == 1) {
 	double focal_diff = global_init_focal - x[6];
-	fvec[3 * global_num_points] = 
+	fvec[2 * global_num_points] = 
 	    global_constrain_focal_weight * focal_diff;
 
         if (global_params->estimate_distortion) {
-            fvec[3 * global_num_points + 1] = 
+            fvec[2 * global_num_points + 1] = 
                 -global_constrain_rd_weight * x[7];
-            fvec[3 * global_num_points + 2] = 
+            fvec[2 * global_num_points + 2] = 
                 -global_constrain_rd_weight * x[8];
         }
     } else if (global_params->estimate_distortion) {
-        fvec[3 * global_num_points + 0] = 
+        fvec[2 * global_num_points + 0] = 
             -global_constrain_rd_weight * x[7];
-        fvec[3 * global_num_points + 1] = 
+        fvec[2 * global_num_points + 1] = 
             -global_constrain_rd_weight * x[8];
     }
 
@@ -1103,7 +1092,7 @@ void camera_refine_residual(const int *m, const int *n,
 }
 
 /* Refine the position of a single camera */
-void camera_refine(int num_points, v3_t *points, v3_t *projs, 
+void camera_refine(int num_points, v3_t *points, v2_t *projs, 
 		   camera_params_t *params, int adjust_focal, 
                    int estimate_distortion)
 {
@@ -1157,7 +1146,7 @@ void camera_refine(int num_points, v3_t *points, v3_t *projs,
         }
     
 	lmdif_driver2(camera_refine_residual, 
-                      3 * num_points + focal_constraint + 
+                      2 * num_points + focal_constraint + 
                       2 * estimate_distortion, 
                       num_camera_params, x, 1.0e-12);
 
@@ -1197,7 +1186,7 @@ void camera_refine(int num_points, v3_t *points, v3_t *projs,
 	global_constrain_focal = 0;
 	global_constrain_focal_weight = 0.0;	    
     
-	lmdif_driver2(camera_refine_residual, 3 * num_points, 6, x, 1.0e-12);
+	lmdif_driver2(camera_refine_residual, 2 * num_points, 6, x, 1.0e-12);
 
 	/* Copy out the parameters */
 	memcpy(params->t, x + 0, 3 * sizeof(double));

@@ -274,6 +274,7 @@ std::vector<KeypointWithScaleRot>
         kps_w[i].m_x = kps[i].m_x;
         kps_w[i].m_y = kps[i].m_y;
         kps_w[i].m_d = kps[i].m_d;
+        kps_w[i].m_depth = kps[i].m_depth;
         kps_w[i].m_scale = scale[i];
         kps_w[i].m_orient = orient[i];
     }
@@ -680,7 +681,7 @@ std::vector<KeypointWithDesc> ReadKeysFastBin(FILE *fp, bool descriptor,
     for (int i = 0; i < num_keys; i++) {
         keys[i].m_x = info[i].x;
         keys[i].m_y = info[i].y;
-        
+        keys[i].m_depth = info[i].depth;    
         if (scales != NULL)
             (*scales)[i] = info[i].scale;
         if (orients != NULL)
@@ -730,7 +731,7 @@ std::vector<KeypointWithDesc> ReadKeysFastBinGzip(gzFile fp, bool descriptor,
     for (int i = 0; i < num_keys; i++) {
         keys[i].m_x = info[i].x;
         keys[i].m_y = info[i].y;
-        
+        keys[i].m_depth = info[i].depth;
         if (scales != NULL)
             (*scales)[i] = info[i].scale;
         if (orients != NULL)

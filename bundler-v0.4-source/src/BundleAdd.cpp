@@ -102,10 +102,10 @@ v3_t BundlerApp::TriangulateNViews(const ImageKeyVector &views,
 	int key_idx = views[i].second;
 	Keypoint &key = GetKey(image_idx, key_idx);
 
-	v3_t pr = sfm_project_final(cameras + camera_idx, pt, 
+	v2_t pr = sfm_project_final(cameras + camera_idx, pt, 
 				    explicit_camera_centers ? 1 : 0,
                                     m_estimate_distortion ? 1 : 0);
-        assert (0);
+        
         if (m_optimize_for_fisheye) {
             double x = Vx(pr), y = Vy(pr);
             m_image_data[image_idx].DistortPoint(x, y, Vx(pr), Vy(pr));
@@ -113,9 +113,8 @@ v3_t BundlerApp::TriangulateNViews(const ImageKeyVector &views,
 
 	double dx = Vx(pr) - key.m_x;
 	double dy = Vy(pr) - key.m_y;
-        double ddepth = Vz(pr) - key.m_depth;
 
-	error += dx * dx + dy * dy + ddepth*ddepth;
+	error += dx * dx + dy * dy;
     }
 
     error = sqrt(error / num_views);
@@ -569,9 +568,9 @@ int BundlerApp::BundleAdjustAddNewPoints(int camera_idx,
 		int pt_idx = GetKey(image_idx,this_idx).m_extra;
 
 		/* Check reprojection error */	    
-		v3_t pr = sfm_project_final(cameras + i, points[pt_idx], 
+		v2_t pr = sfm_project_final(cameras + i, points[pt_idx], 
 					    true, m_estimate_distortion);
-                assert (0);
+
 		double dx = GetKey(other,other_idx).m_x - Vx(pr);
 		double dy = GetKey(other,other_idx).m_y - Vy(pr);
 		    
@@ -698,10 +697,10 @@ int BundlerApp::BundleAdjustAddNewPoints(int camera_idx,
 		int pt_idx = GetKey(other,other_idx).m_extra;
 
 		/* Check reprojection error */
-		v3_t pr = sfm_project_final(cameras + camera_idx, 
+		v2_t pr = sfm_project_final(cameras + camera_idx, 
 					    points[pt_idx],
 					    true, m_estimate_distortion);
-                assert (0);
+
 		double dx = GetKey(image_idx,this_idx).m_x - Vx(pr);
 		double dy = GetKey(image_idx,this_idx).m_y - Vy(pr);
 		    

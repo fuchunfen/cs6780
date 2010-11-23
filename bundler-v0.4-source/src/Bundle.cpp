@@ -684,8 +684,8 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
                     const Keypoint &key = *iter;
 
                     if (key.m_extra >= 0) {
-                        double b[3], pr[3];
-                        double dx, dy, ddepth, dist;
+                        double b[3], pr[2];
+                        double dx, dy, dist;
                         int pt_idx = key.m_extra;
 
                         b[0] = Vx(nz_pts[remap[pt_idx]]);
@@ -706,9 +706,8 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
 
                         dx = pr[0] - key.m_x;
                         dy = pr[1] - key.m_y;
-                        ddepth = pr[2] - key.m_depth;
 
-                        dist = sqrt(dx * dx + dy * dy + ddepth*ddepth);
+                        dist = sqrt(dx * dx + dy * dy);
                         dist_total += dist;
                         num_dists++;
 
@@ -2500,10 +2499,10 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
 {
     int num_points_curr = num_points;
     v3_t *points_curr = new v3_t[num_points];
-    v3_t *projs_curr = new v3_t[num_points];
+    v2_t *projs_curr = new v2_t[num_points];
 
     memcpy(points_curr, points, num_points * sizeof(v3_t));
-    memcpy(projs_curr, projs, num_points * sizeof(v3_t));
+    memcpy(projs_curr, projs, num_points * sizeof(v2_t));
 
     std::vector<int> inliers;
 
@@ -2526,8 +2525,8 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
             break;
 
         v3_t *points_next = new v3_t[num_points];
-        v3_t *projs_next = new v3_t[num_points];
-        assert (0);
+        v2_t *projs_next = new v2_t[num_points];
+
         int count = 0;
         double error = 0.0;
         std::vector<int> inliers_next;
@@ -2535,9 +2534,9 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
         double *errors = new double[num_points_curr];
 
         for (int i = 0; i < num_points_curr; i++) {
-            v3_t pr = sfm_project_final(camera, points_curr[i], 1,
+            v2_t pr = sfm_project_final(camera, points_curr[i], 1,
                 estimate_distortion ? 1 : 0);
-            assert (0);
+
             if (optimize_for_fisheye) {
                 /* Distort pr */
 
@@ -2713,14 +2712,13 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v2_t *projs,
         points[i] = triangulate_n_refine(points[i], num_views, pv, Rs, ts, 
             &error_curr);
 
-        v3_t pr = sfm_project_final(camera_out, points[i], 1,
+        v2_t pr = sfm_project_final(camera_out, points[i], 1,
             m_estimate_distortion ? 1 : 0);
-        assert (0);
+
         double dx = Vx(pr) - Vx(projs[i]);
         double dy = Vy(pr) - Vy(projs[i]);
-        double ddepth = Vz(pr) - Vz(projs[i]);
 
-        error += dx * dx + dy * dy + ddepth*ddepth;
+        error += dx * dx + dy * dy;
 
         delete [] pv;
         delete [] Rs;
