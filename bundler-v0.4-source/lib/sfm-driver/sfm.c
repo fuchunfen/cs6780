@@ -374,8 +374,9 @@ void sfm_project_rd(camera_params_t *init, double *K, double *k,
 	p[0] *= factor;
 	p[1] *= factor;
     }
-    printf("@@@18\n");
+    //@@@18
     p[2] = b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2];
+    printf ("@@@18 %f %f %f\n", p[0], p[1], p[2]);
 }
 
 static double *global_last_ws = NULL;

@@ -33,7 +33,7 @@ for d in `ls -1 $IMAGE_DIR | egrep "jpg$"`
 do 
     pgm_file=$IMAGE_DIR/`echo $d | sed 's/jpg$/pgm/'`
     key_file=$IMAGE_DIR/`echo $d | sed 's/jpg$/key/'`
-    depth_file=$IMAGE_DIR/`echo $d | sed 's/jpg$/txt/'`
+    depth_file=$IMAGE_DIR/`echo $d | sed 's/jpg$/txt.calib/'`
     mask_file=$IMAGE_DIR/`echo $d | sed 's/jpg$/mask/'`
     echo "mogrify -format pgm $IMAGE_DIR/$d; $SIFT < $pgm_file > $key_file; rm $pgm_file; $BIN_PATH/InjectDepth $key_file $depth_file $mask_file"
 
