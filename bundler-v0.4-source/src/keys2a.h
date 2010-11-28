@@ -32,8 +32,10 @@ using namespace ann_1_1_char;
 class Keypoint {
 public:    
     Keypoint(float x, float y, float depth, float scale, float ori, short int *d) :
-	m_x(x), m_y(y), m_depth(/*kmatzen_debug depth*/0.0), m_scale(scale), m_ori(ori), m_d(d)
-    { }
+	m_x(x), m_y(y), m_depth(depth), m_scale(scale), m_ori(ori), m_d(d)
+    {
+//      std::cerr << "x: " << m_x << " y: " << m_y << " depth: " << m_depth << std::endl; 
+    }
 
     float m_x, m_y;        /* Subpixel location of keypoint. */
     float m_depth;

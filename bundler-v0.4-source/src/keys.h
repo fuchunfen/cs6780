@@ -40,8 +40,11 @@ public:
     { m_x = 0.0; m_y = 0.0; m_depth = 0.0, m_extra = -1; m_track = -1; }
 
     Keypoint(float x, float y, float depth) :
-	m_x(x), m_y(y), m_depth (/*kmatzen_debug depth*/ 0.0)
-    { m_r = 0; m_g = 0; m_b = 0; }
+	m_x(x), m_y(y), m_depth (depth)
+    { 
+      m_r = 0; m_g = 0; m_b = 0; 
+//      std::cerr << "x: " << m_x << " y: " << m_y << " depth: " << m_depth << std::endl;
+    }
 
     virtual ~Keypoint() {}   
     
