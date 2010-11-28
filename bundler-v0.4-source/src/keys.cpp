@@ -213,6 +213,7 @@ std::vector<Keypoint> ReadKeyFile(const char *filename)
     for (int i = 0; i < num_keys; i++) {
         kps[i].m_x = kps_d[i].m_x;
         kps[i].m_y = kps_d[i].m_y;
+        kps[i].m_depth = kps_d[i].m_depth;
     }
 
     kps_d.clear();

@@ -233,7 +233,7 @@ public:
     /* Set up the matrix of projections and the visibility mask */
     void SetupProjections(int num_cameras, int num_points, 
 			  int *added_order,
-			  v3_t *projections, char *vmask);
+			  v2_t *projections, char *vmask);
 
     /* Find the camera with the most matches to existing points */
     int FindCameraWithMostMatches(int num_cameras, int num_points,
@@ -352,7 +352,7 @@ public:
 
 
     /* Refine a set of 3D points */
-    double RefinePoints(int num_points, v3_t *points, v3_t *projs,
+    double RefinePoints(int num_points, v3_t *points, v2_t *projs,
 			int *pt_idxs, camera_params_t *cameras,
 			int *added_order,
 			const std::vector<ImageKeyVector> &pt_views,
@@ -361,7 +361,7 @@ public:
     /* Refine a given camera and the points it observes */
     std::vector<int> RefineCameraAndPoints(const ImageData &data, 
                                            int num_points,
-					   v3_t *points, v3_t *projs,
+					   v3_t *points, v2_t *projs,
 					   int *pt_idxs, 
 					   camera_params_t *cameras,
 					   int *added_order,

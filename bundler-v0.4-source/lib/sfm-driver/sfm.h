@@ -62,7 +62,7 @@ void sfm_project_rd(camera_params_t *init, double *K, double *k,
                     double *R, double *dt, double *b, double *p,
                     int undistort, int explicit_camera_centers);
 
-v3_t sfm_project_final(camera_params_t *params, v3_t pt,
+v2_t sfm_project_final(camera_params_t *params, v3_t pt,
 		       int explicit_camera_centers, int undistort);
 
 void run_sfm(int num_pts, int num_cameras, int ncons,
@@ -86,13 +86,13 @@ void run_sfm(int num_pts, int num_cameras, int ncons,
              double *Uout, double *Wout);
 
 /* Refine the position of a single camera */
-void camera_refine(int num_points, v3_t *points, v3_t *projs, 
+void camera_refine(int num_points, v3_t *points, v2_t *projs, 
 		   camera_params_t *params, int adjust_focal,
                    int estimate_distortion);
 
 /* Refine the position of a single camera, keeping the first fixed */
 void camera_refine_fix_free(int num_points, v3_t *points, 
-                            v3_t *projs0, v3_t *projs1,
+                            v2_t *projs0, v2_t *projs1,
                             camera_params_t *params0, 
                             camera_params_t *params1, double *H);
 

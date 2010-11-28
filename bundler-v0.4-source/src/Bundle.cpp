@@ -566,7 +566,7 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
         }
 
         vmask = new char[num_pts * num_cameras];
-        projections = new double[3 * num_projections];
+        projections = new double[2 * num_projections];
 
         for (int i = 0; i < num_pts * num_cameras; i++)
             vmask[i] = 0;
@@ -584,10 +584,8 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
 
                     vmask[nz_count * num_cameras + c] = 1;
 
-                    projections[3 * arr_idx + 0] = GetKey(v,k).m_x;
-                    projections[3 * arr_idx + 1] = GetKey(v,k).m_y;
-                    projections[3 * arr_idx + 2] = GetKey(v, k).m_depth;
-                    printf("@@@15\n");
+                    projections[2 * arr_idx + 0] = GetKey(v,k).m_x;
+                    projections[2 * arr_idx + 1] = GetKey(v,k).m_y;
 
                     arr_idx++;
                 }
@@ -686,8 +684,8 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
                     const Keypoint &key = *iter;
 
                     if (key.m_extra >= 0) {
-                        double b[3], pr[3];
-                        double dx, dy, ddepth, dist;
+                        double b[3], pr[2];
+                        double dx, dy, dist;
                         int pt_idx = key.m_extra;
 
                         b[0] = Vx(nz_pts[remap[pt_idx]]);
@@ -708,9 +706,8 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
 
                         dx = pr[0] - key.m_x;
                         dy = pr[1] - key.m_y;
-                        ddepth = pr[2] - key.m_depth;
-                        printf("@@@16\n");
-                        dist = sqrt(dx * dx + dy * dy + ddepth*ddepth);
+
+                        dist = sqrt(dx * dx + dy * dy);
                         dist_total += dist;
                         num_dists++;
 
@@ -1141,7 +1138,7 @@ void BundlerApp::InitializeBundleAdjust(int &num_init_cams,
 /* Set up the matrix of projections and the visibility mask */
 void BundlerApp::SetupProjections(int num_cameras, int num_points, 
                                   int *added_order,
-                                  v3_t *projections, char *vmask) 
+                                  v2_t *projections, char *vmask) 
 {
     for (int i = 0; i < num_cameras * num_points; i++)
         vmask[i] = 0;
@@ -1156,7 +1153,7 @@ void BundlerApp::SetupProjections(int num_cameras, int num_points,
                 /* This is a good point */
                 vmask[pidx * num_cameras + i] = 1;
                 projections[pidx * num_cameras + i] = 
-                    v3_new(GetKey(idx,j).m_x, GetKey(idx,j).m_y, GetKey(idx, j).m_depth);
+                    v2_new(GetKey(idx,j).m_x, GetKey(idx,j).m_y);
             }
         }
     }
@@ -1786,10 +1783,8 @@ int BundlerApp::SetupInitialCameraPair(int i_best, int j_best,
         } else {
             double x_proj1 = GetKey(i_best,key_idx1).m_x;
             double y_proj1 = GetKey(i_best,key_idx1).m_y;
-            double depth_proj1 = GetKey(i_best, key_idx1).m_depth;
             double x_proj2 = GetKey(j_best,key_idx2).m_x;
             double y_proj2 = GetKey(j_best,key_idx2).m_y;
-            double depth_proj2 = GetKey(j_best, key_idx2).m_depth;
 
             double error;
 
@@ -2105,7 +2100,6 @@ void BundlerApp::BundleAdjust()
         int cnp = GetNumCameraParameters();
 
         /* Run sfm for the first time */
-        //@@@??
         double *S = new double[2 * 2 * cnp * cnp];
         double error0;
         error0 = RunSFM(curr_num_pts, 2, 0, false,
@@ -2493,7 +2487,7 @@ void BundlerApp::BundleAdjust()
 
 std::vector<int> RefineCameraParameters(const ImageData &data,
                                         int num_points, 
-                                        v3_t *points, v3_t *projs, 
+                                        v3_t *points, v2_t *projs, 
                                         int *pt_idxs, camera_params_t *camera,
                                         double *error_out, 
                                         bool adjust_focal,
@@ -2505,10 +2499,10 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
 {
     int num_points_curr = num_points;
     v3_t *points_curr = new v3_t[num_points];
-    v3_t *projs_curr = new v3_t[num_points];
+    v2_t *projs_curr = new v2_t[num_points];
 
     memcpy(points_curr, points, num_points * sizeof(v3_t));
-    memcpy(projs_curr, projs, num_points * sizeof(v3_t));
+    memcpy(projs_curr, projs, num_points * sizeof(v2_t));
 
     std::vector<int> inliers;
 
@@ -2531,7 +2525,7 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
             break;
 
         v3_t *points_next = new v3_t[num_points];
-        v3_t *projs_next = new v3_t[num_points];
+        v2_t *projs_next = new v2_t[num_points];
 
         int count = 0;
         double error = 0.0;
@@ -2540,7 +2534,7 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
         double *errors = new double[num_points_curr];
 
         for (int i = 0; i < num_points_curr; i++) {
-            v3_t pr = sfm_project_final(camera, points_curr[i], 1,
+            v2_t pr = sfm_project_final(camera, points_curr[i], 1,
                 estimate_distortion ? 1 : 0);
 
             if (optimize_for_fisheye) {
@@ -2553,10 +2547,7 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
 
             double dx = Vx(pr) - Vx(projs_curr[i]);
             double dy = Vy(pr) - Vy(projs_curr[i]);
-            double ddepth = Vz(pr) - Vz(projs_curr[i]);
-            //@@@
-            printf("@@@6\n");
-            double diff = sqrt(dx * dx + dy * dy + ddepth*ddepth);
+            double diff = sqrt(dx * dx + dy * dy);
 
             errors[i] = diff;
             error += diff;
@@ -2657,7 +2648,7 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
 }
 
 
-double BundlerApp::RefinePoints(int num_points, v3_t *points, v3_t *projs,
+double BundlerApp::RefinePoints(int num_points, v3_t *points, v2_t *projs,
                                 int *pt_idxs, camera_params_t *cameras,
                                 int *added_order,
                                 const std::vector<ImageKeyVector> &pt_views,
@@ -2673,7 +2664,7 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v3_t *projs,
 
         if (num_views < 2) continue;
 
-        v3_t *pv = new v3_t[num_views];
+        v2_t *pv = new v2_t[num_views];
         double *Rs = new double[9 * num_views];
         double *ts = new double[3 * num_views];
 
@@ -2694,9 +2685,7 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v3_t *projs,
                 double p_n[3];
                 matrix_product(3, 3, 3, 1, Kinv, p3, p_n);
 
-                //@@@
-                printf("@@@7\n");
-                pv[j] = v3_new(p_n[0], p_n[1], key.m_depth);
+                pv[j] = v2_new(p_n[0], p_n[1]);
 
                 cam = cameras + camera_idx;
             } else {
@@ -2708,9 +2697,7 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v3_t *projs,
                 double p_n[3];
                 matrix_product(3, 3, 3, 1, Kinv, p3, p_n);
 
-                //@@@
-                printf("@@@8\n");
-                pv[j] = v3_new(p_n[0], p_n[1], Vz(projs[i]));
+                pv[j] = v2_new(p_n[0], p_n[1]);
                 cam = camera_out;
             }
 
@@ -2722,21 +2709,16 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v3_t *projs,
 
         // points[i] = triangulate_n(num_views, pv, Rs, ts, &error_curr);
         double error_curr = 0.0;
-        //@@@
-        printf("@@@10\n");
-        v2_t temp = v2_new(Vx(*pv), Vy(*pv));
-        points[i] = triangulate_n_refine(points[i], num_views, &temp, Rs, ts, 
+        points[i] = triangulate_n_refine(points[i], num_views, pv, Rs, ts, 
             &error_curr);
 
-        v3_t pr = sfm_project_final(camera_out, points[i], 1,
+        v2_t pr = sfm_project_final(camera_out, points[i], 1,
             m_estimate_distortion ? 1 : 0);
 
         double dx = Vx(pr) - Vx(projs[i]);
         double dy = Vy(pr) - Vy(projs[i]);
-        double ddepth = Vz(pr) - Vz(projs[i]);
-        //@@@
-        printf("@@@8\n");
-        error += dx * dx + dy * dy + ddepth*ddepth;
+
+        error += dx * dx + dy * dy;
 
         delete [] pv;
         delete [] Rs;
@@ -2748,7 +2730,7 @@ double BundlerApp::RefinePoints(int num_points, v3_t *points, v3_t *projs,
 
 std::vector<int> 
 BundlerApp::RefineCameraAndPoints(const ImageData &data, int num_points,
-                                  v3_t *points, v3_t *projs,
+                                  v3_t *points, v2_t *projs,
                                   int *pt_idxs, 
                                   camera_params_t *cameras,
                                   int *added_order,
@@ -2768,11 +2750,11 @@ BundlerApp::RefineCameraAndPoints(const ImageData &data, int num_points,
 
     int num_points_curr = num_points;
     v3_t *points_curr = new v3_t[num_points];
-    v3_t *projs_curr = new v3_t[num_points];
+    v2_t *projs_curr = new v2_t[num_points];
     int *pt_idxs_curr = new int[num_points];
 
     memcpy(points_curr, points, sizeof(v3_t) * num_points);
-    memcpy(projs_curr, projs, sizeof(v3_t) * num_points);
+    memcpy(projs_curr, projs, sizeof(v2_t) * num_points);
     memcpy(pt_idxs_curr, pt_idxs, sizeof(int) * num_points);
 
     do {
@@ -2856,7 +2838,7 @@ BundlerApp::RefineCameraAndPoints(const ImageData &data, int num_points,
 }
 
 
-bool FindAndVerifyCamera(int num_points, v3_t *points_solve, v3_t *projs_solve,
+bool FindAndVerifyCamera(int num_points, v3_t *points_solve, v2_t *projs_solve,
                          int *idxs_solve,
                          double *K, double *R, double *t, 
                          double proj_estimation_threshold,
@@ -2870,11 +2852,8 @@ bool FindAndVerifyCamera(int num_points, v3_t *points_solve, v3_t *projs_solve,
     int r = -1;
 
     if (num_points >= 9) {
-        //@@@
-        printf("@@@9\n");
-        v2_t temp = v2_new(Vx(*projs_solve), Vy(*projs_solve));
         r = find_projection_3x4_ransac(num_points, 
-            points_solve, &temp, 
+            points_solve, projs_solve, 
             P, /* 2048 */ 4096 /* 100000 */, 
             proj_estimation_threshold);
     }
@@ -2932,11 +2911,8 @@ bool FindAndVerifyCamera(int num_points, v3_t *points_solve, v3_t *projs_solve,
             (pimg[0] - Vx(projs_solve[j])) * 
             (pimg[0] - Vx(projs_solve[j])) + 
             (pimg[1] - Vy(projs_solve[j])) * 
-            (pimg[1] - Vy(projs_solve[j])) +
-            (pimg[2] - Vz(projs_solve[j])) *
-            (pimg[2] - Vz(projs_solve[j]));
-        printf("@@@5\n");
-        //@@@
+            (pimg[1] - Vy(projs_solve[j]));
+
         diff = sqrt(diff);
 
         if (diff < proj_estimation_threshold)
@@ -3001,8 +2977,8 @@ BundlerApp::BundleInitializeImage(ImageData &data,
     int num_pts_solve = 0;
     int num_keys = (int) data.m_keys.size();
     v3_t *points_solve = new v3_t[num_keys];
-    v3_t *projs_solve = new v3_t[num_keys];
-    v3_t *projs_solve_orig = new v3_t[num_keys];
+    v2_t *projs_solve = new v2_t[num_keys];
+    v2_t *projs_solve_orig = new v2_t[num_keys];
     int *idxs_solve = new int[num_keys];
     int *keys_solve = new int[num_keys];
 
@@ -3035,15 +3011,13 @@ BundlerApp::BundleInitializeImage(ImageData &data,
         if (m_optimize_for_fisheye) {
             double x = data.m_keys[key].m_x;
             double y = data.m_keys[key].m_y;
-            double depth = data.m_keys[key].m_depth;
             double x_u, y_u;
             data.UndistortPoint(x, y, x_u, y_u);
-            projs_solve[num_pts_solve] = v3_new(x_u, y_u, depth);
-            projs_solve_orig[num_pts_solve] = v3_new(x, y, depth);
+            projs_solve[num_pts_solve] = v2_new(x_u, y_u);
+            projs_solve_orig[num_pts_solve] = v2_new(x, y);
         } else {
             projs_solve[num_pts_solve] = 
-                v3_new(data.m_keys[key].m_x, data.m_keys[key].m_y,
-                       data.m_keys[key].m_depth);
+                v2_new(data.m_keys[key].m_x, data.m_keys[key].m_y);
         }
 
         idxs_solve[num_pts_solve] = pt;
@@ -3169,7 +3143,7 @@ BundlerApp::BundleInitializeImage(ImageData &data,
     int num_inliers = (int) inliers_weak.size();
 
     v3_t *points_final = new v3_t[num_inliers];
-    v3_t *projs_final = new v3_t[num_inliers];
+    v2_t *projs_final = new v2_t[num_inliers];
     int *idxs_final = new int[num_inliers];
     int *keys_final = new int[num_inliers];
     int num_points_final = num_inliers;
@@ -3275,7 +3249,7 @@ void BundlerApp::BundleInitializeImageFullBundle(int image_idx, int parent_idx,
     int num_pts_solve = 0;
     int num_keys = GetNumKeys(image_idx);
     v3_t *points_solve = new v3_t[num_keys];
-    v3_t *projs_solve = new v3_t[num_keys];
+    v2_t *projs_solve = new v2_t[num_keys];
     int *idxs_solve = new int[num_keys];
     int *keys_solve = new int[num_keys];
 
@@ -3358,15 +3332,13 @@ void BundlerApp::BundleInitializeImageFullBundle(int image_idx, int parent_idx,
                 if (m_optimize_for_fisheye) {
                     double x = GetKey(image_idx,this_idx).m_x;
                     double y = GetKey(image_idx,this_idx).m_y;
-                    double depth = GetKey(image_idx, this_idx).m_depth;
                     double x_u, y_u;
                     m_image_data[image_idx].UndistortPoint(x, y, x_u, y_u);
-                    projs_solve[num_pts_solve] = v3_new(x_u, y_u, depth);
+                    projs_solve[num_pts_solve] = v2_new(x_u, y_u);
                 } else {
                     projs_solve[num_pts_solve] = 
-                        v3_new(GetKey(image_idx,this_idx).m_x, 
-                        GetKey(image_idx,this_idx).m_y,
-                        GetKey(image_idx, this_idx).m_depth);
+                        v2_new(GetKey(image_idx,this_idx).m_x, 
+                        GetKey(image_idx,this_idx).m_y);
                 }
 
                 idxs_solve[num_pts_solve] = pt_idx;
@@ -3699,7 +3671,7 @@ bool BundlerApp::BundleRegisterImage(ImageData &data, bool init_location)
     int num_pts_solve = 0;
     int num_keys = (int) data.m_keys_desc.size();
     v3_t *points_solve = new v3_t[num_keys];
-    v3_t *projs_solve = new v3_t[num_keys];
+    v2_t *projs_solve = new v2_t[num_keys];
     int *idxs_solve = new int[num_keys];
     int *keys_solve = new int[num_keys];
 
@@ -3903,15 +3875,13 @@ bool BundlerApp::BundleRegisterImage(ImageData &data, bool init_location)
                     if (m_optimize_for_fisheye) {
                         double x = data.m_keys_desc[idx1].m_x;
                         double y = data.m_keys_desc[idx1].m_y;
-                        double depth = data.m_keys_desc[idx1].m_depth;
                         double x_u, y_u;
                         m_image_data[idx1].UndistortPoint(x, y, x_u, y_u);
-                        projs_solve[num_pts_solve] = v3_new(x_u, y_u, depth);
+                        projs_solve[num_pts_solve] = v2_new(x_u, y_u);
                     } else {
                         projs_solve[num_pts_solve] = 
-                            v3_new(data.m_keys_desc[idx1].m_x, 
-                            data.m_keys_desc[idx1].m_y,
-                            data.m_keys_desc[idx1].m_depth);
+                            v2_new(data.m_keys_desc[idx1].m_x, 
+                            data.m_keys_desc[idx1].m_y);
                     }
 
                     idxs_solve[num_pts_solve] = pt_idx;
@@ -3953,7 +3923,7 @@ bool BundlerApp::BundleRegisterImage(ImageData &data, bool init_location)
         delete [] keys_solve;
 
         points_solve = new v3_t[num_pts_solve];
-        projs_solve = new v3_t[num_pts_solve];
+        projs_solve = new v2_t[num_pts_solve];
         idxs_solve = new int[num_pts_solve];
         keys_solve = new int[num_pts_solve];
 
@@ -3973,15 +3943,13 @@ bool BundlerApp::BundleRegisterImage(ImageData &data, bool init_location)
             if (m_optimize_for_fisheye) {
                 double x = data.m_keys_desc[key_idx].m_x;
                 double y = data.m_keys_desc[key_idx].m_y;
-                double depth = data.m_keys_desc[key_idx].m_depth;
                 double x_u, y_u;
                 data.UndistortPoint(x, y, x_u, y_u);
-                projs_solve[i] = v3_new(x_u, y_u, depth);
+                projs_solve[i] = v2_new(x_u, y_u);
             } else {
                 projs_solve[i] = 
-                    v3_new(data.m_keys_desc[key_idx].m_x, 
-                    data.m_keys_desc[key_idx].m_y,
-                    data.m_keys_desc[key_idx].m_depth);
+                    v2_new(data.m_keys_desc[key_idx].m_x, 
+                    data.m_keys_desc[key_idx].m_y);
             }
 
             keys_solve[i] = key_idx;
@@ -4068,7 +4036,7 @@ bool BundlerApp::BundleRegisterImage(ImageData &data, bool init_location)
 
     int num_points_final = (int) inliers_weak.size();
     v3_t *points_final = new v3_t[num_points_final];
-    v3_t *projs_final = new v3_t[num_points_final];
+    v2_t *projs_final = new v2_t[num_points_final];
 
     for (int i = 0; i < num_points_final; i++) {
         points_final[i] = points_solve[inliers_weak[i]];
