@@ -372,7 +372,8 @@ void sfm_project_rd(camera_params_t *init, double *K, double *k,
 	p[0] *= factor;
 	p[1] *= factor;
     }
-    p[2] = 0;//@@@
+    //@@@
+    p[2] = sqrt(b_cam[0]*b_cam[0] + b_cam[1]*b_cam[1] + b_cam[2]*b_cam[2]);
 }
 
 static double *global_last_ws = NULL;

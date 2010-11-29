@@ -590,7 +590,7 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
                     // @@@ adding the extra projection element
                     projections[3 * arr_idx + 0] = GetKey(v,k).m_x;
                     projections[3 * arr_idx + 1] = GetKey(v,k).m_y;
-                    projections[3 * arr_idx + 2] = 0;//GetKey(v, k).m_depth;
+                    projections[3 * arr_idx + 2] = 100*GetKey(v, k).m_depth;
                     // Depth is correct here
                     //std::cerr << "Depth: " << GetKey(v, k).m_depth << std::endl;
                     arr_idx++;
