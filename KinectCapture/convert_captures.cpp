@@ -8,7 +8,6 @@
 
 IplImage * bayer_image;
 IplImage * rgb_image;
-uint16_t t_gamma [2048];
 
 void
 encode_rgb (const std::string & filename)
@@ -22,7 +21,7 @@ encode_rgb (const std::string & filename)
   memcpy (bayer_image->imageData, buffer, COLOR_BUFFER_SIZE);
   cvCvtColor (bayer_image, rgb_image, CV_BayerGB2BGR);
   std::stringstream ss_new;
-  ss_new << "converted/" << filename.substr(0, filename.find('.')) << ".jpg";
+  ss_new << "converted/" << filename.substr(0, filename.find('.') + 1) << "jpg";
   cvSaveImage (ss_new.str().c_str(), rgb_image);
 }
 
@@ -36,13 +35,13 @@ encode_depth (const std::string & filename)
   file.read ((char*)buffer, DEPTH_BUFFER_SIZE);
   file.close();
   std::stringstream ss_new;
-  ss_new << "converted/" << filename.substr(0, filename.find('.'));
+  ss_new << "converted/" << filename.substr(0, filename.find('.') + 1) << "txt";
   std::ofstream output (ss_new.str().c_str());
   for (int row = 0; row < 480; ++row)
   {
     for (int col = 0; col < 640; ++col)
     {
-      output << t_gamma[buffer [row * 640 + col]] << " ";
+      output << buffer [row * 640 + col] << " ";
     }
     output << std::endl;
   }
@@ -52,13 +51,6 @@ encode_depth (const std::string & filename)
 int
 main (int argc, char ** argv)
 {
-  for (int i = 0; i < 2048; ++i)
-  {
-    float v = i / 2048.0;
-    v = powf(v, 3) * 6;
-    t_gamma[i] = v*6*256;
-  }
-
   rgb_image = cvCreateImage (cvSize (640, 480), IPL_DEPTH_8U, 3);
   bayer_image = cvCreateImage (cvSize (640, 480), IPL_DEPTH_8U, 1);
 
@@ -75,6 +67,7 @@ main (int argc, char ** argv)
     {
       encode_depth (filename);
     }
+    std::cout << filename << " conversion complete" << std::endl;
   }
 
   cvReleaseImage (&rgb_image);

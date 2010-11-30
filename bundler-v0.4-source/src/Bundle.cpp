@@ -539,7 +539,7 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
                           double *S, double *U, double *V, double *W,
                           bool remove_outliers)
 {
-    std::cerr << "[RunSFM]" << std::endl;
+    //std::cerr << "[RunSFM]" << std::endl;
 #define MIN_POINTS 20
     int num_outliers = 0;
     int total_outliers = 0;
@@ -590,7 +590,7 @@ double BundlerApp::RunSFM(int num_pts, int num_cameras, int start_camera,
                     // @@@ adding the extra projection element
                     projections[3 * arr_idx + 0] = GetKey(v,k).m_x;
                     projections[3 * arr_idx + 1] = GetKey(v,k).m_y;
-                    projections[3 * arr_idx + 2] = 100*GetKey(v, k).m_depth;
+                    projections[3 * arr_idx + 2] = m_depth_tuning*GetKey(v, k).m_depth;
                     // Depth is correct here
                     //std::cerr << "Depth: " << GetKey(v, k).m_depth << std::endl;
                     arr_idx++;
@@ -2509,7 +2509,7 @@ std::vector<int> RefineCameraParameters(const ImageData &data,
                                         double min_proj_error_threshold,
                                         double max_proj_error_threshold)
 {
-    std::cerr << "[RefineCameraParameters]" << std::endl;
+    //std::cerr << "[RefineCameraParameters]" << std::endl;
     int num_points_curr = num_points;
     v3_t *points_curr = new v3_t[num_points];
     v2_t *projs_curr = new v2_t[num_points];
@@ -2862,7 +2862,7 @@ bool FindAndVerifyCamera(int num_points, v3_t *points_solve, v2_t *projs_solve,
                          std::vector<int> &inliers_weak,
                          std::vector<int> &outliers)
 {
-    std::cerr << "[FindAndVerifyCamera]" << std::endl;
+    //std::cerr << "[FindAndVerifyCamera]" << std::endl;
     /* First, find the projection matrix */
     double P[12];
     int r = -1;
@@ -2980,7 +2980,7 @@ BundlerApp::BundleInitializeImage(ImageData &data,
                                   bool *success_out,
                                   bool refine_cameras_and_points)
 {
-    std::cerr << "[BundleInitializeImage]" << std::endl;
+    //std::cerr << "[BundleInitializeImage]" << std::endl;
     clock_t start = clock();
 
     if (success_out != NULL)

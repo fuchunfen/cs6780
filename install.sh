@@ -18,4 +18,8 @@ cp OpenKinect-libfreenect-67c0d07/c/build/lib/libfreenect.a KinectCapture
 cd KinectCapture
 make
 cp InjectDepth ../bundler-v0.4-source/bin/
+cd ReprojectDepth
+qmake
+make
+cd ..
 cd ..

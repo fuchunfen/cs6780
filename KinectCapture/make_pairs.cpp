@@ -15,7 +15,7 @@ main (int argc, char ** argv)
   while (input >> filename)
   {
     filenames.push_back (filename);
-    depths.push_back (filename.find ('.') == std::string::npos);
+    depths.push_back (filename.find (".jpg") == std::string::npos);
   }
   input.close();
 
@@ -45,12 +45,13 @@ main (int argc, char ** argv)
     std::stringstream ss2;
     ss2 << "converted/" << pairs[i].second;
     std::stringstream ss2_new;
-    ss2_new << "images/" << i;
+    ss2_new << "images/" << i << ".txt";
     std::ifstream inputDepth (ss2.str().c_str());
     std::ofstream outputDepth (ss2_new.str().c_str());
     outputDepth << inputDepth.rdbuf();
     outputDepth.close();
     inputDepth.close();
+    std::cout << 100*i/pairs.size() << "% complete" << std::endl;
   }
 
   return 0;
